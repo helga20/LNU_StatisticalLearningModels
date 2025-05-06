@@ -1,0 +1,148 @@
+-------------------------- 1 --------------------------
+
+library(ISLR)
+library(glmnet)
+library(pls)
+
+variant=3
+variant
+set.seed(variant)
+redundant=floor(runif(1,5,25))
+redundant
+
+Auto_new=Auto[-sample(1:nrow(Auto), round((redundant / 100) * nrow(Auto))), ]
+fix(Auto_new)
+
+set.seed(variant)
+test_size=round((2 * redundant / 100) * nrow(Auto_new))
+test_ind=sample(1:nrow(Auto_new), test_size)
+Auto_test=Auto_new[test_ind, ]
+Auto_train=Auto_new[-test_ind, ]
+
+
+Auto_train$name=NULL
+Auto_test$name=NULL
+
+lm_fit=lm(mpg ~ ., data = Auto_train)
+lm_pred=predict(lm_fit, Auto_test)
+lm_mse=mean((lm_pred - Auto_test$mpg)^2)
+lm_mse
+
+
+x_train=model.matrix(mpg ~ ., Auto_train)[, -1]
+y_train=Auto_train$mpg
+x_test=model.matrix(mpg ~ ., Auto_test)[, -1]
+y_test=Auto_test$mpg
+
+set.seed(variant)
+cv_ridge=cv.glmnet(x_train, y_train, alpha = 0)
+ridge_pred=predict(cv_ridge, s = cv_ridge$lambda.min, newx = x_test)
+ridge_mse=mean((ridge_pred - y_test)^2)
+ridge_mse
+
+set.seed(variant)
+cv_lasso=cv.glmnet(x_train, y_train, alpha = 1)
+lasso_pred=predict(cv_lasso, s = cv_lasso$lambda.min, newx = x_test)
+lasso_mse=mean((lasso_pred - y_test)^2)
+lasso_mse
+
+set.seed(variant)
+pcr_fit=pcr(mpg ~ ., data = Auto_train, scale = TRUE, validation = "CV")
+validationplot(pcr_fit, val.type = "MSEP")  # це допоможе візуально вибрати M
+pcr_ncomp=which.min(pcr_fit$validation$PRESS)
+pcr_pred=predict(pcr_fit, Auto_test, ncomp = pcr_ncomp)
+pcr_mse=mean((pcr_pred - Auto_test$mpg)^2)
+pcr_mse
+
+set.seed(variant)
+pls_fit=plsr(mpg ~ ., data = Auto_train, scale = TRUE, validation = "CV")
+validationplot(pls_fit, val.type = "MSEP") 
+pls_ncomp=which.min(pls_fit$validation$PRESS)
+pls_pred=predict(pls_fit, Auto_test, ncomp = pls_ncomp)
+pls_mse=mean((pls_pred - Auto_test$mpg)^2)
+pls_mse
+
+results=data.frame(
+  Model = c("Linear", "Ridge", "Lasso", "PCR", "PLS"),
+  Test_MSE = c(lm_mse, ridge_mse, lasso_mse, pcr_mse, pls_mse)
+)
+print(results)
+
+
+-------------------------- 2 --------------------------
+
+set.seed(variant)
+n = 100 * (1 + variant %/% 10)
+mu = (variant / 5) + 1 
+sigma = sqrt(2 * variant) + 1
+
+set.seed(variant)
+x = rnorm(n, mu, sigma)
+eps = rnorm(n, 0, 1)
+
+set.seed(variant)
+b0 = round(runif(1, -10, 10))
+b1 = round(runif(1, -10, 10))
+b2 = round(runif(1, -10, 10))
+b3 = round(runif(1, -10, 10))
+
+y = b0 + b1 * x + b2 * x^2 + b3 * x^3 + eps
+
+xy_dataframe = data.frame(y,
+                          x,
+                          x2 = x^2,
+                          x3 = x^3,
+                          x4 = x^4,
+                          x5 = x^5,
+                          x6 = x^6,
+                          x7 = x^7,
+                          x8 = x^8,
+                          x9 = x^9,
+                          x10 = x^10)
+
+library(leaps)
+
+set.seed(variant)
+best_subset_model = regsubsets(y ~ ., data = xy_dataframe, nvmax = 10)
+best_subset_summary = summary(best_subset_model)
+
+par(mfrow = c(2, 2))
+
+plot(best_subset_summary$cp, xlab = "Number of variables", ylab = "Cp", type = "b", main = "Cp")
+plot(best_subset_summary$bic, xlab = "Number of variables", ylab = "BIC", type = "b", main = "BIC")
+plot(best_subset_summary$adjr2, xlab = "Number of variables", ylab = "Adjusted R2", type = "b", main = "Adjusted R2")
+
+best_cp = which.min(best_subset_summary$cp)
+best_bic = which.min(best_subset_summary$bic)
+best_adjr2 = which.max(best_subset_summary$adjr2)
+
+cat("The best model Cp:\n")
+print(coef(best_subset_model, best_cp))
+
+cat("\nThe best model BIC:\n")
+print(coef(best_subset_model, best_bic))
+
+cat("\nThe best model Adjusted R2:\n")
+print(coef(best_subset_model, best_adjr2))
+
+step_forward=step(lm(y ~ 1, data = xy_dataframe), scope = ~., direction = "forward")
+step_backward=step(lm(y ~ ., data = xy_dataframe), direction = "backward")
+
+cat("Cp:\n", coef(best_subset_model, which.min(best_subset_summary$cp)), "\n")
+cat("BIC:\n", coef(best_subset_model, which.min(best_subset_summary$bic)), "\n")
+cat("R^2:\n", coef(best_subset_model, which.max(best_subset_summary$adjr2)), "\n")
+
+print(summary(step_forward))
+print(summary(step_backward))
+
+
+x_lasso = model.matrix(y ~ ., data = xy_dataframe)[, -1]  
+y_lasso = xy_dataframe$y
+set.seed(variant)
+cv_lasso_gen = cv.glmnet(x_lasso, y_lasso, alpha = 1)
+lasso_pred_gen = predict(cv_lasso_gen, s = cv_lasso_gen$lambda.min, newx = x_lasso)
+lasso_mse_gen = mean((lasso_pred_gen - y_lasso)^2)
+lasso_mse_gen
+
+lasso_coef_gen = coef(cv_lasso_gen, s = cv_lasso_gen$lambda.min)
+print(lasso_coef_gen)

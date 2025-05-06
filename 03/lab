@@ -1,0 +1,87 @@
+n=500
+m=50000
+m=500000
+x1=rnorm(n)
+x2=rnorm(n)
+t=rep(0,n)
+for (i in 1:n) {
+if (pnorm(x1-x2+3*sin(x2)+rnorm(1))>0.5){
+t[i]=1}}
+for (i in 1:n) {
+if (pnorm(x1[i]-x2[i]+3*sin(x2[i])+rnorm(1))>0.5){
+t[i]=1}}
+t
+x=seq(min(x1)-0.2,max(x1)+0.2.length-1000)
+x=seq(min(x1)-0.2,max(x1)+0.2,length-1000)
+x=seq(min(x1)-0.2,max(x1)+0.2,length=1000)
+x=seq(min(x1)-0.2,max(y1)+0.2,length=1000)
+x=seq(min(x1)-0.2,max(x1)+0.2,length=1000)
+y=seq(min(x2)-0.2,max(x2)+0.2,length=1000)
+x=outer(x,y,function(x,y) pnorm(x-y+3*sin(y))))
+x=outer(x,y,function(x,y) pnorm(x-y+3*sin(y)))
+countour(x,y,z,levels=0.5,drawlabels=F)
+contour(x,y,z,levels=0.5,drawlabels=F)
+x=seq(min(x1)-0.2,max(x1)+0.2,length=1000)
+y=seq(min(x2)-0.2,max(x2)+0.2,length=1000)
+z=outer(x,y,function(x,y) pnorm(x-y+3*sin(y)))
+contour(x,y,z,levels=0.5,drawlabels=F)
+points(x1,x2,col=t+1)
+points(x1,x2,col=t+1)
+points(x1,x2,col=t+1)
+contour(x,y,z,levels=0.5,drawlabels=F)
+points(x1,x2,col=t+1)
+t_est=rep(0,n)
+for(i in 1:n){
+if (pnorm(x1[i]-x2[i]+3*sin(x2[i])+rnorm(1))>0.5){
+t_est[i]=1}}
+mean(t==t_est)
+mean(t==t_est)
+t_est_t=rep(0,m)
+for(i in 1:m){
+s
+ss
+}
+x1_test=rnorm(m)
+x2_test=rnorm(m)
+t_test=rep(0,m)
+for(i in 1:m){
+if (pnorm(x1_test[i]-x2_test[i]+3*sin(x2_test[i])+rnorm(1))>0.5){
+t_test[i]=1}}
+t_est_t=rep(0,m)
+for(i in 1:m){
+if (pnorm(x1_test[i]-x2_test[i]+3*sin(x2_test[i])>0.5){
+for(i in 1:m){
+if (pnorm(x1_test[i]-x2_test[i]+3*sin(x2_test[i])>0.5){
+for(i in 1:m){
+if (pnorm(x1_test[i]-x2_test[i]+3*sin(x2_test[i]))>0.5){
+t_est_t[i]=1}}
+mean(t_test==t_est_t)
+log_m=glm(t~x1+x2,family='binomial')
+prob=predict(log_m,type='response')
+pred=rep(0,n)
+pred[prob>0.5]=1
+mean(t==pred)
+z=outer(x,y,function(x,y) predict(log_m,data.frame(x1=x,x2=y), type='response'))
+par(new=TRUE)
+contour(x,y,z,levels=0.5,drawlabels=F,col='red')
+contour(x,y,z,levels=0.5,drawlabels=F)
+contour(x,y,z,levels=0.5,drawlabels=F)
+z=outer(x,y,function(x,y) pnorm(x-y+3*sin(y)))
+contour(x,y,z,levels=0.5,drawlabels=F)
+points(x1,x2,col=t+1)
+z=outer(x,y,function(x,y) predict(log_m,data.frame(x1=x,x2=y), type='response'))
+par(new=TRUE)
+contour(x,y,z,levels=0.5,drawlabels=F,col='red')
+log_m=glm(t~x1+x2+sin(x2),family='binomial')
+prob=predict(log_m,type='response')
+pred=rep(0,n)
+pred[prob>0.5]=1
+mean(t==pred)
+z=outer(x,y,function(x,y) predict(log_m,data.frame(x1=x,x2=y), type='response'))
+par(new=TRUE)
+contour(x,y,z,levels=0.5,drawlabels=F,col='green')
+log_m=glm(t~x1+x2,family='binomial')
+prob=predict(log_m,data.frame(x1=x1_test,x2=x2_test),type='response')
+pred=rep(0,m)
+pred[prob>0.5]=1
+mean(t_test==pred)

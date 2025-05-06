@@ -1,0 +1,124 @@
+```{r}
+variant = 25+15
+set.seed(variant)
+redudant = round(runif(1,6,24))
+```
+
+1. Розглянемо набір даних Boston з бібліотеки MASS. Модифікуйте ці дані 
+наступним чином: встановивши seed, що дорівнює значенню змінної variant, 
+видаліть redundant % спостережень з допомогою функції sample.
+
+```{r}
+library(MASS)
+boston = Boston[-sample(1:length(Boston[,1]),round((redudant/100)*length(Boston[,1]))),]
+```
+
+Використовуючи модифіковані дані, пристосуйте модель логістичної регресії для 
+передбачення у вибраному районі рівня злочинності більшого чи меншого за 
+середній на основі змінних nox та rad.
+```{r}
+boston$crim01 = ifelse(boston$crim > mean(boston$crim), 1, 0)
+```
+Оцініть тестову помилку цієї моделі логістичної регресії, використовуючи метод 
+валідаційного набору (використати розбиття 50 на 50, попередньо скинувши seed).
+Повторіть попередню процедуру три рази, використовуючи нові розбиття вибірки на
+навчальний та тестовий набори. Прокоментуйте отримані результати.
+```{r}
+train = sample(1:length(boston$crim),0.5*length(boston$crim))
+glm_bos = glm(crim01~nox+rad,data=boston,subset = train, family = 'binomial')
+prob_bos = predict(glm_bos,boston[-train,],type='response')
+crim01_pred = ifelse(prob_bos> 0.5, 1, 0)
+mean(crim01_pred!=boston$crim01[-train])
+```
+Розгляньте модель логістичної регресії для передбачення у вибраному районі рівня
+злочинності більшого чи меншого за середній на основі змінних nox, rad та medv.
+```{r}
+train = sample(1:length(boston$crim),0.5*length(boston$crim))
+glm_bos_2 = glm(crim01~nox+rad+medv,data=boston,subset = train, family = 'binomial')
+prob_bos_2 = predict(glm_bos_2,boston[-train,],type='response')
+crim01_pred_2 = ifelse(prob_bos_2> 0.5, 1, 0)
+mean(crim01_pred_2!=boston$crim01[-train])
+```
+___________________________2______________________________________
+
+Модифікуйте дані Auto наступним чином: встановивши seed, що дорівнює значенню 
+змінної variant, видаліть redundant % спостережень з допомогою функції sample.
+```{r}
+set.seed(variant)
+library(ISLR)
+auto = Auto[-sample(1:length(Auto[,1]),round((redudant/100)*length(Auto[,1]))),]
+```
+На основі цього набору даних обчисліть оцінку середнього змінної mpg. 
+Оцініть стандартну похибку цієї оцінки. 
+```{r}
+mean(auto$mpg)
+sd(auto$mpg)/sqrt(length(auto$mpg))
+```
+Тепер оцініть стандартну похибку розглянутої вище оцінки 
+середнього за допомогою бутстрапу та порівняйте з попередньо отриманим
+результатом. 
+```{r}
+fun_mean = function(data,index){
+  return(mean(data[index]))}
+fun_mean(auto$mpg,1:length(auto$mpg))
+```
+```{r}
+library(boot)
+boot(auto$mpg,fun_mean,R=1000)
+```
+Обчисліть оцінку для медіани та десятого процентиля змінної mpg. 
+
+```{r}
+median(auto$mpg)
+quantile(auto$mpg,0.1)
+```
+Оцініть стандартні помилки отриманих оцінок допомогою бутстрапу.
+```{r}
+fun_med = function(data,index){
+  return(median(data[index]))}
+fun_med(auto$mpg,1:length(auto$mpg))
+boot(auto$mpg,fun_med,R=1000)
+```
+```{r}
+fun_q10 = function(data,index){
+  return(quantile(data[index],0.1))}
+fun_q10(auto$mpg,1:length(auto$mpg))
+boot(auto$mpg,fun_q10,R=1000)
+```
+ _______________________3______________________________
+ Встановіть seed, що дорівнює значенню змінної variant
+```{r}
+set.seed(variant)
+```
+ 
+створіть змодельований набір даних наступним чином:
+```{r}
+x = rnorm (100)
+y = variant*x - ((redudant*40)/variant) * x ^ 2 + rnorm (100)
+```
+
+
+Встановіть seed, що дорівнює значенню змінної variant та обчисліть оцінки 
+тестових помилок методом LOOCV, для наступних чотирьох моделей
+Y = β0 + β1X + ε
+Y = β0 + β1X + β2^2 + ε
+Y = β0 + β1X + β2X^2 + β3X^3 + ε
+Y = β0 + β1X + β2X^2 + β3X^3 + β4X^4 + ε
+Яка з моделей має найменшу тестову помилку LOOCV? Чи це відповідає очікуванням? 
+Поясніть свою відповідь
+
+
+```{r}
+cv.error = rep(0,4)
+for(i in 1:4){
+  lr = glm(y~poly(x,i,raw=T))
+  cv.error[i]=cv.glm(x_y,lr)$delta[1]
+}
+
+```
+
+```{r}
+which.min(cv.error)
+cv.error
+```
+

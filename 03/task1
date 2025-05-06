@@ -1,0 +1,55 @@
+variant=3
+variant
+set.seed(variant)
+redundant=floor(runif(1,5,25))
+redundant
+year=floor(runif(1,2006,2008))
+year
+library(ISLR)
+library(ISLR)
+set.seed(variant)
+train_data=subset(Weekly, Year >= 1990 & Year <= year)
+test_data=subset(Weekly, Year == 2010)
+log_m=glm(Direction ~ Lag2, data = train_data, family = 'binomial')
+prob=predict(log_m, test_data, type = 'response')
+pred=rep('Down',length(Weekly$Direction[train_data]))
+pred = ifelse(prob > 0.5, 'Up', 'Down')
+log_conf_m = table(Predicted = pred, Actual = test_data$Direction)
+log_ac = sum(diag(log_conf_m)) / sum(log_conf_m)
+print(log_conf_m)
+print(log_ac)
+library(MASS)
+lda_m = lda(Direction ~ Lag2, data = train_data)
+lda_prob = predict(lda_m, test_data)$class
+lda_conf_m = table(Predicted = lda_prob, Actual = test_data$Direction)
+lda_ac = sum(diag(lda_conf_m)) / sum(lda_conf_m)
+print(lda_conf_m)
+print(lda_ac)
+qda_m = qda(Direction ~ Lag2, data = train_data)
+qda_prob = predict(qda_m, test_data)$class
+qda_conf_m = table(Predicted = qda_prob, Actual = test_data$Direction)
+qda_ac = sum(diag(qda_conf_m)) / sum(qda_conf_m)
+print(qda_conf_m)
+print(qda_ac)
+library(class)
+lag_train=cbind(train_data$Lag2)
+lag_test=cbind(test_data$Lag2)
+set.seed(variant)
+knn_w=knn(lag_train, lag_test, train_data$Direction,1)
+table(knn_w,test_data$Direction)
+conf_m = table(knn_w, test_data$Direction)
+accuracy = sum(diag(conf_m)) / sum(conf_m)
+print(accuracy)
+knn_accuracy = 0
+best_k = 1
+for (k in 1:10) {
+  knn_pred = knn(train = as.matrix(train_data$Lag2), test = as.matrix(test_data$Lag2), cl = train_data$Direction, k = k)
+  knn_conf_m = table(Predicted = knn_pred, Actual = test_data$Direction)
+  knn_acc = sum(diag(knn_conf_m)) / sum(knn_conf_m)
+  if (knn_acc > knn_accuracy) {
+    knn_accuracy = knn_acc
+    best_k = k
+}}
+print(knn_accuracy)
+print(best_k)
+set.seed(variant)

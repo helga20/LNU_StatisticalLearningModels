@@ -1,0 +1,122 @@
+-------------------------- 1 --------------------------
+
+variant=3
+variant
+set.seed(variant)
+redundant=floor(runif(1,5,25))
+redundant
+
+library(ISLR)
+library(boot)
+library(splines)
+
+set.seed(variant)
+Auto_new=Auto[-sample(1:length(Auto[,1]), round((redundant / 100) * length(Auto[,1]))), ]
+fix(Auto_new)
+
+PolReg = lm(mpg~poly(horsepower,3,raw=T), data=Auto_new)
+summary(PolReg)
+
+horsepower_sorted = sort(Auto_new$horsepower)
+predicted_mpg_sorted = predict(PolReg, newdata = data.frame(horsepower = horsepower_sorted))
+plot(Auto_new$horsepower, Auto_new$mpg, xlab = "Horsepower", ylab = "MPG", pch = 16, col = "blue")
+lines(horsepower_sorted, predicted_mpg_sorted, col = "red", lwd = 2)
+
+rss_values = numeric(15)
+for (d in 1:15) {
+  model = lm(mpg ~ poly(horsepower, d, raw = TRUE), data = Auto_new)
+  predictions = predict(model, newdata = Auto_new)
+  residuals = Auto_new$mpg - predictions
+  rss_values[d] = sum(residuals^2)
+}
+for (d in 1:15) {
+  cat(sprintf("%d\t%.2f\n", d, rss_values[d]))
+}
+
+set.seed(variant)
+cv_error = sapply(1:15, function(d) {
+  cv.glm(Auto_new, glm(mpg ~ poly(horsepower, d, raw = TRUE), data = Auto_new), K = 10)$delta[1]
+})
+plot(1:15, cv_error, type = "b", pch = 19, col = "green",
+     xlab = "Degree", ylab = "10-fold CV Error")
+
+knots = quantile(Auto_new$horsepower, probs = c(0.25, 0.5, 0.75))
+SplineReg = lm(mpg ~ bs(horsepower, knots = knots), data = Auto_new)
+summary(SplineReg)
+
+horsepower_grid = sort(Auto_new$horsepower)
+spline_predictions = predict(SplineReg, newdata = data.frame(horsepower = horsepower_grid))
+plot(Auto_new$horsepower, Auto_new$mpg, pch = 16, col = "blue", xlab = "Horsepower", ylab = "MPG")
+lines(horsepower_grid, spline_predictions, col = "red", lwd = 2)
+
+rss_spline = numeric(13)
+for (df in 3:15) {
+  model = lm(mpg ~ bs(horsepower, df = df), data = Auto_new)
+  preds = predict(model, newdata = Auto_new)
+  residuals = Auto_new$mpg - preds
+  rss_spline[df - 2] = sum(residuals^2)
+}
+for (i in 1:13) {
+  cat(sprintf("%d\t%.2f\n", i + 2, rss_spline[i]))
+}
+
+set.seed(variant)
+cv_error_spline = numeric(13)
+for (df in 3:15) {
+  glm_fit = glm(mpg ~ bs(horsepower, df = df), data = Auto_new)
+  cv_result = cv.glm(Auto_new, glm_fit, K = 10)
+  cv_error_spline[df - 2] = cv_result$delta[1]
+}
+for (i in 1:13) {
+  cat(sprintf("%d\t%.2f\n", i + 2, cv_error_spline[i]))
+}
+
+set.seed(variant)
+auto_poly = poly(Auto_new$horsepower, 6, raw = TRUE)
+auto_poly_model = glm(Auto_new$mpg ~ auto_poly)
+auto_poly_summary = summary(auto_poly_model)
+approx_cv_error = auto_poly_summary$dispersion * (nrow(Auto_new) - auto_poly_summary$df[1]) / nrow(Auto_new)
+approx_cv_error
+
+set.seed(variant)
+auto_spline = bs(Auto_new$horsepower, df = 13)
+auto_spline_model = glm(Auto_new$mpg ~ auto_spline)
+auto_spline_summary = summary(auto_spline_model)
+approx_cv_error_spline = auto_spline_summary$dispersion * (nrow(Auto_new) - auto_spline_summary$df[1]) / nrow(Auto_new)
+approx_cv_error_spline
+
+
+-------------------------- 2 --------------------------
+variant = 3
+variant
+
+DegFd = variant / 15
+n = 100
+
+set.seed(variant)
+X1 = rt(n, df = DegFd)
+X2 = rt(n, df = DegFd)
+e = rnorm(n, mean = 0, sd = 1)
+Y = variant * X1 + 2 * (variant + 1) * X2 + e
+
+set.seed(variant)
+beta1 = rchisq(1, df = variant / 20)
+
+result = matrix(NA, nrow = 100, ncol = 2)
+for (i in 1:100) {
+  beta2 = lm(I(Y - beta1 * X1) ~ X2)$coef[2]   
+  beta1 = lm(I(Y - beta2 * X2) ~ X1)$coef[2]   
+  result[i, ] <- c(beta1, beta2)
+}
+
+plot(result[,1], type = "l", col = "blue", ylim = range(result), ylab = "Estimates β", xlab = "Iteration")
+lines(result[,2], col = "red")
+legend("topright", legend = c("β1", "β2"), col = c("blue", "red"), lty = 1)
+
+summary(lm(Y ~ X1 + X2))$coefficients
+
+
+
+
+
+

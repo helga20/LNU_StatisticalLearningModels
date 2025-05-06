@@ -1,0 +1,78 @@
+library(ISLR)
+library(tree)
+
+variant=3
+variant
+set.seed(variant)
+redundant=floor(runif(1,5,25))
+redundant
+
+set.seed(variant)
+test_indices = sample(1:nrow(Auto), round((redundant / 100) * nrow(Auto)))
+Auto_train = Auto[-test_indices, ]
+Auto_test = Auto[test_indices, ]
+
+tree_model = tree(mpg ~ . - name, data = Auto_train)
+summary(tree_model)
+
+plot(tree_model)
+text(tree_model, pretty = 0)
+
+preds = predict(tree_model, newdata = Auto_test)
+
+mse = mean((Auto_test$mpg - preds)^2)
+mse
+
+cv_result = cv.tree(tree_model)
+plot(cv_result$size, cv_result$dev, type = "b", xlab = "Tree Size", ylab = "Deviance")
+
+best_size = cv_result$size[which.min(cv_result$dev)]
+pruned_tree = prune.tree(tree_model, best = best_size)
+plot(pruned_tree)
+text(pruned_tree, pretty = 0)
+
+pruned_preds = predict(pruned_tree, newdata = Auto_test)
+pruned_mse = mean((Auto_test$mpg - pruned_preds)^2)
+pruned_mse
+
+library(randomForest)
+set.seed(variant)
+bagging_model = randomForest(mpg ~ . - name, data = Auto_train, mtry = ncol(Auto_train) - 2, importance = TRUE)
+bagging_preds = predict(bagging_model, newdata = Auto_test)
+bagging_mse = mean((Auto_test$mpg - bagging_preds)^2)
+bagging_mse
+importance(bagging_model)
+varImpPlot(bagging_model)
+
+set.seed(variant)
+rf_model = randomForest(mpg ~ . - name, data = Auto_train, importance = TRUE)
+rf_preds = predict(rf_model, newdata = Auto_test)
+rf_mse = mean((Auto_test$mpg - rf_preds)^2)
+rf_mse
+importance(rf_model)
+varImpPlot(rf_model)
+
+library(gbm)
+set.seed(variant)
+
+lambdas = c(0.001, 0.01, 0.05, 0.1, 0.3, 0.5, 1)
+train_mse = numeric(length(lambdas))
+test_mse = numeric(length(lambdas))
+
+for (i in seq_along(lambdas)) {
+  boost_model = gbm(mpg ~ . - name, data = Auto_train, distribution = "gaussian", n.trees = 5000, interaction.depth = 4, shrinkage = lambdas[i], verbose = FALSE)
+  
+  train_pred = predict(boost_model, newdata = Auto_train, n.trees = 5000)
+  test_pred = predict(boost_model, newdata = Auto_test, n.trees = 5000)
+  
+  train_mse[i] = mean((Auto_train$mpg - train_pred)^2)
+  test_mse[i] = mean((Auto_test$mpg - test_pred)^2)
+}
+results = data.frame(lambda = lambdas, Test_MSE = mse_values)
+print(results)
+
+plot(lambdas, train_mse, type = "b", pch = 19, col = "blue", xlab = "λ", ylab = "Training MSE")
+plot(lambdas, test_mse, type = "b", pch = 19, col = "red", xlab = "λ", ylab = "Test MSE")
+
+
+

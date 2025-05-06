@@ -1,0 +1,3 @@
+train=sample(435,217)
+Boston_new=Boston[-sample(1:length(Boston[,1]),round((redundant/100)*length(Boston[,1]))),]
+redundant=floor(runif(1,5,25))

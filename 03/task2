@@ -1,0 +1,54 @@
+library(ISLR)
+data("Auto")
+n_total=nrow(Auto)
+n_r=round((redundant/100)*n_total)
+r_ind=sample(1:n_total,n_r)
+Auto_mod=Auto[-r_ind,]
+mpg_mean=mean(Auto_mod$mpg)
+Auto_mod$mpg01=ifelse(Auto_mod$mpg>mpg_mean,1,0)
+set.seed(variant)
+test_size=round((2*redundant/100)*n_total)
+test_ind=sample(1:nrow(Auto_mod), test_size)
+test_data=Auto_mod[test_ind,]
+train_data=Auto_mod[-test_ind,]
+predictors=c('weight','displacement','horsepower')
+x_train=train_data[, predictors]
+y_train=train_data$mpg01
+x_test=test_data[, predictors]
+y_test=test_data$mpg01
+lda_m = lda(mpg01 ~ weight + displacement + horsepower, data = train_data)
+library(MASS)
+library(class)
+library(stats)
+lda_m = lda(mpg01 ~ weight + displacement + horsepower, data = train_data)
+lda_pred = predict(lda_m, x_test)$class
+lda_conf_m = table(Predicted = lda_pred, Actual = y_test)
+lda_acc = sum(diag(lda_conf_m)) / sum(lda_conf_m)
+print(lda_conf_m)
+print(lda_acc)
+qda_m = qda(mpg01 ~ weight + displacement + horsepower, data = train_data)
+qda_pred = predict(qda_m, x_test)$class
+qda_conf_m = table(Predicted = qda_pred, Actual = y_test)
+qda_acc = sum(diag(qda_conf_m)) / sum(qda_conf_m)
+print(qda_conf_m)
+print(qda_acc)
+log_m = glm(mpg01 ~ weight + displacement + horsepower, data = train_data, family = binomial)
+log_prob = predict(log_m, x_test, type = 'response')
+log_pred = ifelse(log_prob > 0.5, 1, 0)
+log_conf_m = table(Predicted = log_pred, Actual = y_test)
+log_acc = sum(diag(log_conf_m)) / sum(log_conf_m)
+print(log_conf_m)
+print(log_acc) 
+knn_accuracy = 0
+best_k = 1
+for (k in 1:10) {
+  knn_pred = knn(train = as.matrix(x_train), test = as.matrix(x_test), cl = y_train, k = k)
+  knn_conf_m = table(Predicted = knn_pred, Actual = y_test)
+  knn_acc = sum(diag(knn_conf_m)) / sum(knn_conf_m)
+  if (knn_acc > knn_accuracy) {
+    knn_accuracy = knn_acc
+    best_k = k
+}}
+print(best_k)
+print(knn_accuracy)
+q()

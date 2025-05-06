@@ -1,0 +1,34 @@
+library(boot)
+cv_100=rep(0,100)
+cv_10=rep(0,100)
+cv_15=rep(0,100)
+cv_5=rep(0,100)
+cv_20=rep(0,100)
+cv_30=rep(0,100)
+cv_50=rep(0,100)
+err_t=rep(0,100)
+x1_test=rnorm(100000)
+x2_test=rnorm(100000)
+eps=rnorm(100000)
+y_test=2+3*x1_test-4*x2_test+eps
+for (i in 1:100) {
+x1=rnorm(1000)
+x2=rnorm(1000) 
+train_20=sample(1:1000,200)
+train_30=sample(1:1000,300)
+train_50=sample(1:1000,500)
+y=2+3*x1-4*x2+rnorm(1000)
+data=data.frame(x1,x2,y)
+cv_20[i]=mean((data$y[-train_20]-predict(glm(y~x1+x2,data=data,subset=train_20),data[-train_20,]))^2)
+cv_30[i]=mean((data$y[-train_30]-predict(glm(y~x1+x2,data=data,subset=train_30),data[-train_30,]))^2)
+cv_50[i]=mean((data$y[-train_50]-predict(glm(y~x1+x2,data=data,subset=train_50),data[-train_50,]))^2)
+l_mod=glm(y~x1+x2,data=data)
+err_t[i] = mean((y_test - predict(l_mod, data.frame(x1 = x1_test, x2 = x2_test)))^2)
+cv_100[i]=cv.glm(data,l_mod)$delta[1]
+cv_5[i]=cv.glm(data,l_mod,K=5)$delta[1]
+cv_10[i]=cv.glm(data,l_mod,K=10)$delta[1]
+}
+var(err_t)
+sd(cv_5)
+sd(cv_10)
+sd(cv_100)
